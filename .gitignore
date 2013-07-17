@@ -1,0 +1,10 @@
+/tmp
+/data
+*.pyc
+*.swp
+*~
+
+/dist
+/build
+/test_environment
+marks.txt
