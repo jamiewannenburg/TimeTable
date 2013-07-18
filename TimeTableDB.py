@@ -35,37 +35,4 @@ class TimeTableDB(Model):
                     out[1] += ', ' + result['venue'][i]
         return out
 
-    def save(self,time_tables):
-        """
-        """
-        data = {}
-        for col in self.columns:
-            if col != 'id':
-                data[col] = []
-        sem1_count = 0
-        sem2_count = 0
-        for time_table in time_tables:
-            #divide permutations into semesters
-            if time_table.semester == 1:
-                count = sem1_count
-                sem1_count +=1
-            else:
-                count = sem2_count
-                sem2_count +=1
-                
-            for slot in time_table.slots:
-                data['permutation'].append(count)
-                data['semester'].append(time_table.semester)
-                data['name'].append(slot.subject)
-                data['venue'].append(slot.venue)
-                data['day'].append(slot.day)
-                data['time'].append(slot.time)
-        
-        self.open()
-        self.cursor.execute("DROP TABLE " + self.name + ";")
-        self.make_table()
-        #print data
-        if data!={}:
-            self.insert(data)
-        self.close()
 

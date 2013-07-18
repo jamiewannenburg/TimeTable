@@ -2,6 +2,10 @@ from Model import Model
 import sqlite3
 import os
 from bs4 import BeautifulSoup
+from itertools import combinations
+from TimeTableDB import TimeTableDB
+import datetime
+import math
 
 class AllCoursesDB(Model):
     def __init__(self,root='',database_path='data/',database_name='mydatabase.db'):
@@ -91,3 +95,108 @@ class AllCoursesDB(Model):
             for course in result['name']:
                 out.append(course.lower())
         return out
+
+    def get_valid_time_tables(self,all_subjects,clashes):
+        sem_subjects = {1:[],2:[]}
+        self.open()
+        types = {}
+        for subject in all_subjects:
+            types[subject] = []
+            self.cursor.execute('select type,semester from '+self.name+' where name=? group by type;',[subject])
+            types_result = self.cursor.fetchall()
+            sem_subjects[int(types_result[0][1])].append(subject)
+            for tr in types_result:
+                types[subject].append(tr[0])
+        
+        data = {}
+        data['permutation'] = []
+        data['semester'] = []
+        data['permutation'] = []
+        data['time'] = []
+        data['day'] = []
+        data['name'] = []
+        data['venue'] = []
+
+        count = [0,0]
+        for sem in sem_subjects:
+            subjects = sem_subjects[sem]
+            if subjects != []:
+                cols = ""
+                tables = ""
+                where_clause = ""
+                first = True
+                table_names = []
+                type_map = {}
+                params = []
+                for i,subject in enumerate(subjects):
+                    for l_type in types[subject]:
+                        tn = 't' + str(i) + str(l_type)
+                        type_map[tn] = [subject,l_type]
+                        table_names.append(tn)
+                        if first:
+                            cols += tn+".lecture_group"
+                            tables += self.name+" "+tn
+                            where_clause += tn+".name = ? and " + tn + ".type = ?"
+                            params.append(subject)
+                            params.append(l_type)
+                            first = False
+                        else:
+                            cols += ","+tn+".lecture_group"
+                            tables += " join "+self.name+" "+tn
+                            where_clause += " and "+tn+".name = ? and " + tn + ".type = ?"
+                            params.append(subject)
+                            params.append(l_type)
+
+                clashes_str = "sum( case"
+                for i,j in combinations(table_names,2):
+                    clashes_str += " when "
+                    clashes_str += "strftime('%s',"+i+".end_time) - strftime('%s',"+i+".start_time) + "
+                    clashes_str += "strftime('%s',"+j+".end_time) - strftime('%s',"+j+".start_time) "
+                    clashes_str += "> (select max( "
+                    clashes_str += "abs( strftime('%s',"+i+".end_time) - strftime('%s',"+j+".start_time) ),"
+                    clashes_str += "abs( strftime('%s',"+j+".end_time) - strftime('%s',"+i+".start_time) )"
+                    clashes_str += " )) "
+                    clashes_str += "and "+j+".day = "+i+".day then 1"
+
+                clashes_str += " else 0 end )"
+                
+                sql='select '+ cols +', '+ clashes_str + ' from ' + tables + ' where ' + where_clause + ' group by ' + cols + ';'
+                #print sql
+                
+                self.cursor.execute(sql,params)
+                clashes_perms = self.cursor.fetchall()
+                
+                for perm,clashes_perm in enumerate(clashes_perms):
+                    count[sem-1] += 1
+                    clash_num = clashes_perm[len(table_names)]
+                    if clash_num/len(subjects) <= clashes:
+                        for i,tn in enumerate(table_names):
+                            subject, l_type = type_map[tn]
+                            group = clashes_perm[i]
+                            results = self.select(cols=['start_time','end_time','day','venue'],
+                                    where={'type':l_type,'name':subject,'lecture_group':group})
+                            for i,venue in enumerate(results['venue']):
+                                start_time = datetime.datetime.strptime(results['start_time'][i],'%H:%M:%S')
+                                end_time =datetime.datetime.strptime(results['end_time'][i],'%H:%M:%S')
+                                diff = end_time-start_time
+                                for j in xrange(int(math.ceil(float(diff.seconds)/3600.))):
+                                    new_time = start_time+datetime.timedelta(hours=j)
+                                    data['permutation'].append(perm)
+                                    data['semester'].append(sem)
+                                    data['name'].append(subject)
+                                    data['venue'].append(venue)
+                                    data['day'].append(results['day'][i])
+                                    data['time'].append( new_time.strftime('%H:%M:%S') )
+
+        self.close()
+
+        db = TimeTableDB()
+        db.open()
+        db.cursor.execute("DROP TABLE IF EXISTS " + db.name + ";")
+        #self.connection.commit()
+        db.make_table()
+        db.insert(data)
+        db.close()
+
+        return count
+

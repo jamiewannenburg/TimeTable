@@ -132,44 +132,34 @@ def RefreshTableCallback():
     
     user_options.write('user_semester',user_semester.get())
     user_options.write('user_permutation',user_permutation.get())
-
-    if user_semester.get() == '1':
-        PermSelect.config(values=options1)
+    forget = user_permutation.get()
+    if user_semester.get() == 1:
+        PermSelect.config(values=tuple(options1),textvariable=user_permutation)
     else:
-        PermSelect.config(values=options2)    
-    
+        PermSelect.config(values=tuple(options2),textvariable=user_permutation)    
+    user_permutation.set(forget)
     make_table()
 
 def TimeTableCallBack():
-    subjects = Subjects.get_subjects()
+    
     user_options.write('user_clashes',user_clashes.get())
+    subjects = user_options.read('subject_names')
     
-    sem1_subjects = []
-    sem2_subjects = []
-    for subject in subjects:
-        if subject.semester == 1:
-            sem1_subjects.append(subject)
-        else:
-            sem2_subjects.append(subject)
-    
-    time_tables1 = TimeTables.get_valid_time_tables(sem1_subjects,user_clashes.get())
-    time_tables2 = TimeTables.get_valid_time_tables(sem2_subjects,user_clashes.get())
-    time_tables = time_tables1 + time_tables2
-    
-    time_table_db.save(time_tables)
-    
-    global options1,option2
+    len1,len2 = all_courses.get_valid_time_tables(subjects,user_clashes.get())
 
-    options1 = range(len(time_tables1))
-    options2 = range(len(time_tables2))
+    global options1,option2
+    options1 = range(len1)
+    options2 = range(len2)
     user_options.write('options1',options1)
     user_options.write('options2',options2)
-    
-    if user_semester.get() == '1':
-        PermSelect.config(values=options1)
+
+    forget = user_permutation.get()
+    if user_semester.get() == 1:
+        PermSelect.config(values=tuple(options1),textvariable=user_permutation)
     else:
-        PermSelect.config(values=options2)
-    
+        PermSelect.config(values=tuple(options2),textvariable=user_permutation)    
+    user_permutation.set(forget)
+
     make_table()
 
 def make_table():
@@ -202,7 +192,7 @@ if not options2:
 
 user_permutation = IntVar()
 if user_options.read("user_permutation"):
-    user_permutation = user_permutation.set(user_options.read("user_permutation"))
+    user_permutation.set(user_options.read("user_permutation"))
 else:
     user_permutation.set(0)
 
@@ -236,11 +226,13 @@ SemesterSelect.pack(side=LEFT)
 OptionLabel = Label(TimeTablesFrame,text="Option ")
 OptionLabel.pack(side=LEFT)
 
-PermSelect = Spinbox(TimeTablesFrame,textvariable=user_permutation)
-if user_semester.get() == '1':
-    PermSelect.config(values=options1)
+PermSelect = Spinbox(TimeTablesFrame)
+forget = user_permutation.get()
+if user_semester.get() == 1:
+    PermSelect.config(values=tuple(options1),textvariable=user_permutation)
 else:
-    PermSelect.config(values=options2)
+    PermSelect.config(values=tuple(options2),textvariable=user_permutation)    
+user_permutation.set(forget)
 PermSelect.pack(side=LEFT)
 
 RefreshButton = Button(TimeTablesFrame,text="Refresh",command = RefreshTableCallback)
@@ -267,6 +259,7 @@ for i,time in enumerate(possible_times):
     Label(TimeTableFrame,text=time).grid(row=i+1,column=0)
     table_vars.append([])
     for j,day in enumerate(possible_days):
+        #print user_semester.get(),user_permutation.get()
         subject,venue = time_table_db.get_subject(user_semester.get(),user_permutation.get(),day,time)
         
         table_vars[i].append({'subject':StringVar(),'venue':StringVar()})
