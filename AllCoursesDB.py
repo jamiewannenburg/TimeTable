@@ -104,7 +104,8 @@ class AllCoursesDB(Model):
             types[subject] = []
             self.cursor.execute('select type,semester from '+self.name+' where name=? group by type;',[subject])
             types_result = self.cursor.fetchall()
-            sem_subjects[int(types_result[0][1])].append(subject)
+            if types_result != []:
+                sem_subjects[int(types_result[0][1])].append(subject)
             for tr in types_result:
                 types[subject].append(tr[0])
         
@@ -128,6 +129,7 @@ class AllCoursesDB(Model):
                 table_names = []
                 type_map = {}
                 params = []
+                clashes_str = ""
                 for i,subject in enumerate(subjects):
                     for l_type in types[subject]:
                         tn = 't' + str(i) + str(l_type)
@@ -146,29 +148,33 @@ class AllCoursesDB(Model):
                             where_clause += " and "+tn+".name = ? and " + tn + ".type = ?"
                             params.append(subject)
                             params.append(l_type)
+                #print table_names
+                if len(table_names)>2:
+                    clashes_str += "sum( case"
+                    for i,j in combinations(table_names,2):
+                        clashes_str += " when "
+                        clashes_str += "strftime('%s',"+i+".end_time) - strftime('%s',"+i+".start_time) + "
+                        clashes_str += "strftime('%s',"+j+".end_time) - strftime('%s',"+j+".start_time) "
+                        clashes_str += "> (select max( "
+                        clashes_str += "abs( strftime('%s',"+i+".end_time) - strftime('%s',"+j+".start_time) ),"
+                        clashes_str += "abs( strftime('%s',"+j+".end_time) - strftime('%s',"+i+".start_time) )"
+                        clashes_str += " )) "
+                        clashes_str += "and "+j+".day = "+i+".day then 1"
 
-                clashes_str = "sum( case"
-                for i,j in combinations(table_names,2):
-                    clashes_str += " when "
-                    clashes_str += "strftime('%s',"+i+".end_time) - strftime('%s',"+i+".start_time) + "
-                    clashes_str += "strftime('%s',"+j+".end_time) - strftime('%s',"+j+".start_time) "
-                    clashes_str += "> (select max( "
-                    clashes_str += "abs( strftime('%s',"+i+".end_time) - strftime('%s',"+j+".start_time) ),"
-                    clashes_str += "abs( strftime('%s',"+j+".end_time) - strftime('%s',"+i+".start_time) )"
-                    clashes_str += " )) "
-                    clashes_str += "and "+j+".day = "+i+".day then 1"
-
-                clashes_str += " else 0 end )"
+                    clashes_str += " else 0 end )"
+                else:
+                    clashes_str += "sum( 0 )"
                 
-                sql='select '+ cols +', '+ clashes_str + ' from ' + tables + ' where ' + where_clause + ' group by ' + cols + ';'
+                sql='select '+ cols +', '+ clashes_str + ' from ' + tables + " where " + where_clause + ' group by ' + cols + ';'
                 #print sql
                 
                 self.cursor.execute(sql,params)
                 clashes_perms = self.cursor.fetchall()
-                
-                for perm,clashes_perm in enumerate(clashes_perms):
-                    count[sem-1] += 1
+                perm = 0
+                for clashes_perm in clashes_perms:
+                    
                     clash_num = clashes_perm[len(table_names)]
+                    #print clash_num/len(subjects)
                     if clash_num/len(subjects) <= clashes:
                         for i,tn in enumerate(table_names):
                             subject, l_type = type_map[tn]
@@ -187,6 +193,8 @@ class AllCoursesDB(Model):
                                     data['venue'].append(venue)
                                     data['day'].append(results['day'][i])
                                     data['time'].append( new_time.strftime('%H:%M:%S') )
+                        perm += 1
+                        count[sem-1] += 1
 
         self.close()
 

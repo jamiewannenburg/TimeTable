@@ -5,8 +5,6 @@ from UserOptionsDB import UserOptionsDB
 from AllCoursesDB import AllCoursesDB
 from TimeTableDB import TimeTableDB
 import urllib
-import Subjects
-import TimeTables
 
 user_options = UserOptionsDB()
 all_courses = AllCoursesDB()

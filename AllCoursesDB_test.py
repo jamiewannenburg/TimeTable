@@ -38,11 +38,19 @@ class TestFirstRun(unittest.TestCase):
         result = db.get_courses()
         self.assertEqual(result,['test','test1'])
 
+class TestGetTimeTables(unittest.TestCase):
+    
+    def test_get_valid_time_tables(self):
+        db = AllCoursesDB.AllCoursesDB()
+        result = db.get_valid_time_tables(['FRK 100','KRG 110'],0)
+        print result
+        self.assertEqual(result,[3,3])
 
 if __name__=="__main__":
     # check if root exits
     d = os.path.relpath(ROOT)
     if not os.path.exists(d):
         os.makedirs(d)
+    get_valid = TestGetTimeTables
     unittest.main()
 

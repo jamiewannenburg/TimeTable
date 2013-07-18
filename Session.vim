@@ -26,9 +26,9 @@ cnoremap   :simalt ~
 inoremap   :simalt ~
 map Q gq
 nmap gx <Plug>NetrwBrowseX
-nnoremap <C-F4> c
-nnoremap <C-Tab> w
 nmap <S-Insert> "+gP
+nnoremap <C-Tab> w
+nnoremap <C-F4> c
 nnoremap <silent> <Plug>NetrwBrowseX :call netrw#NetrwBrowseX(expand("<cWORD>"),0)
 onoremap <C-F4> c
 vnoremap <C-F4> c
@@ -77,29 +77,29 @@ if expand('%') == '' && !&modified && line('$') <= 1 && getline(1) == ''
 endif
 set shortmess=aoO
 badd +1 GUI
-badd +163 Gui.py
-badd +4 Model.py
+badd +168 Gui.py
+badd +37 Model.py
 badd +1 DisplayFunctions
 badd +5 DisplayFunctions.py
 badd +17 ParseFunctions.py
 badd +298 tests.py
 badd +1 rooster.py
-badd +155 timetable.py
+badd +155 TimeTable.py
 badd +28 AutocompleteEntry.py
 badd +189 Model_test.py
-badd +31 TimeTableDB.py
+badd +37 TimeTableDB.py
 badd +32 TimeTableDB_test.py
-badd +21 UserOptionsDB.py
+badd +15 UserOptionsDB.py
 badd +1 UserOptions.py
 badd +1 UserOptionsDB_test.py
 badd +1 time_table.py
 badd +1 AllCoursesDB_test.py
-badd +22 AllCoursesDB.py
+badd +172 AllCoursesDB.py
 badd +116 Subjects.py
 badd +29 Subjects_test.py
 badd +3 get_courses_test.py
 silent! argdel *
-edit Gui.py
+edit TimeTable.py
 set splitbelow splitright
 set nosplitbelow
 set nosplitright
@@ -207,12 +207,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 168 - ((25 * winheight(0) + 20) / 40)
+let s:l = 146 - ((10 * winheight(0) + 19) / 39)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-168
-normal! 03l
+146
+normal! 031l
 tabedit Model.py
 set splitbelow splitright
 wincmd _ | wincmd |
@@ -223,8 +223,8 @@ set nosplitbelow
 set nosplitright
 wincmd t
 set winheight=1 winwidth=1
-exe 'vert 1resize ' . ((&columns * 79 + 90) / 181)
-exe 'vert 2resize ' . ((&columns * 101 + 90) / 181)
+exe 'vert 1resize ' . ((&columns * 80 + 91) / 183)
+exe 'vert 2resize ' . ((&columns * 102 + 91) / 183)
 argglobal
 setlocal keymap=
 setlocal noarabic
@@ -327,12 +327,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 37 - ((33 * winheight(0) + 19) / 39)
+let s:l = 37 - ((0 * winheight(0) + 19) / 38)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
 37
-normal! 034l
+normal! 033l
 wincmd w
 argglobal
 edit Model_test.py
@@ -437,15 +437,15 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 198 - ((0 * winheight(0) + 19) / 39)
+let s:l = 198 - ((0 * winheight(0) + 19) / 38)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
 198
 normal! 032l
 wincmd w
-exe 'vert 1resize ' . ((&columns * 79 + 90) / 181)
-exe 'vert 2resize ' . ((&columns * 101 + 90) / 181)
+exe 'vert 1resize ' . ((&columns * 80 + 91) / 183)
+exe 'vert 2resize ' . ((&columns * 102 + 91) / 183)
 tabedit TimeTableDB.py
 set splitbelow splitright
 wincmd _ | wincmd |
@@ -456,8 +456,8 @@ set nosplitbelow
 set nosplitright
 wincmd t
 set winheight=1 winwidth=1
-exe 'vert 1resize ' . ((&columns * 79 + 90) / 181)
-exe 'vert 2resize ' . ((&columns * 101 + 90) / 181)
+exe 'vert 1resize ' . ((&columns * 80 + 91) / 183)
+exe 'vert 2resize ' . ((&columns * 102 + 91) / 183)
 argglobal
 setlocal keymap=
 setlocal noarabic
@@ -560,7 +560,7 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 37 - ((27 * winheight(0) + 19) / 39)
+let s:l = 37 - ((0 * winheight(0) + 19) / 38)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
@@ -568,7 +568,7 @@ normal! zt
 normal! 0
 wincmd w
 argglobal
-edit timetable.py
+edit TimeTable.py
 setlocal keymap=
 setlocal noarabic
 setlocal autoindent
@@ -670,15 +670,15 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 146 - ((16 * winheight(0) + 19) / 39)
+let s:l = 146 - ((0 * winheight(0) + 19) / 38)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
 146
 normal! 036l
 wincmd w
-exe 'vert 1resize ' . ((&columns * 79 + 90) / 181)
-exe 'vert 2resize ' . ((&columns * 101 + 90) / 181)
+exe 'vert 1resize ' . ((&columns * 80 + 91) / 183)
+exe 'vert 2resize ' . ((&columns * 102 + 91) / 183)
 tabedit AllCoursesDB.py
 set splitbelow splitright
 wincmd _ | wincmd |
@@ -689,8 +689,8 @@ set nosplitbelow
 set nosplitright
 wincmd t
 set winheight=1 winwidth=1
-exe 'vert 1resize ' . ((&columns * 98 + 90) / 181)
-exe 'vert 2resize ' . ((&columns * 82 + 90) / 181)
+exe 'vert 1resize ' . ((&columns * 100 + 91) / 183)
+exe 'vert 2resize ' . ((&columns * 83 + 91) / 183)
 argglobal
 setlocal keymap=
 setlocal noarabic
@@ -793,12 +793,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 123 - ((26 * winheight(0) + 19) / 39)
+let s:l = 123 - ((29 * winheight(0) + 21) / 43)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
 123
-normal! 030l
+normal! 029l
 wincmd w
 argglobal
 edit AllCoursesDB_test.py
@@ -903,15 +903,15 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 23 - ((5 * winheight(0) + 19) / 39)
+let s:l = 23 - ((6 * winheight(0) + 21) / 43)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
 23
 normal! 019l
 wincmd w
-exe 'vert 1resize ' . ((&columns * 98 + 90) / 181)
-exe 'vert 2resize ' . ((&columns * 82 + 90) / 181)
+exe 'vert 1resize ' . ((&columns * 100 + 91) / 183)
+exe 'vert 2resize ' . ((&columns * 83 + 91) / 183)
 tabedit UserOptionsDB.py
 set splitbelow splitright
 wincmd _ | wincmd |
@@ -922,8 +922,8 @@ set nosplitbelow
 set nosplitright
 wincmd t
 set winheight=1 winwidth=1
-exe 'vert 1resize ' . ((&columns * 91 + 90) / 181)
-exe 'vert 2resize ' . ((&columns * 89 + 90) / 181)
+exe 'vert 1resize ' . ((&columns * 93 + 91) / 183)
+exe 'vert 2resize ' . ((&columns * 90 + 91) / 183)
 argglobal
 setlocal keymap=
 setlocal noarabic
@@ -1026,7 +1026,7 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 15 - ((14 * winheight(0) + 19) / 39)
+let s:l = 15 - ((14 * winheight(0) + 21) / 43)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
@@ -1136,15 +1136,15 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 24 - ((7 * winheight(0) + 19) / 39)
+let s:l = 24 - ((8 * winheight(0) + 21) / 43)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
 24
 normal! 016l
 wincmd w
-exe 'vert 1resize ' . ((&columns * 91 + 90) / 181)
-exe 'vert 2resize ' . ((&columns * 89 + 90) / 181)
+exe 'vert 1resize ' . ((&columns * 93 + 91) / 183)
+exe 'vert 2resize ' . ((&columns * 90 + 91) / 183)
 tabnext 1
 if exists('s:wipebuf')
   silent exe 'bwipe ' . s:wipebuf
