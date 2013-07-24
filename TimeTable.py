@@ -4,7 +4,6 @@ from AutocompleteEntry import AutocompleteEntry
 from UserOptionsDB import UserOptionsDB
 from AllCoursesDB import AllCoursesDB
 from TimeTableDB import TimeTableDB
-import urllib
 
 user_options = UserOptionsDB()
 all_courses = AllCoursesDB()
@@ -14,9 +13,8 @@ class RowCursor:
     def __init__(self):
         self.row = 0
     def get(self):
-        old_row = self.row
         self.row = self.row + 1
-        return old_row
+        return self.row
 
 def Notice(context,message):
     NoticeLabel = Label(context, text = message)
@@ -47,15 +45,12 @@ def GetCoursesCallback():
     # download from web
     try:
         Notice(GetCoursesNotice,"Downloading Courses")
-        f = urllib.urlopen("http://www.up.ac.za/timetables/hatfield_timetable.html")
-        #f = open('data/time_table.html')
-        all_courses_html = f.read()
-        f.close()
+
         # add to database
-        all_courses.parse(all_courses_html)
+        all_courses.parse(campuses)
 
         # Gui Respose
-        global course_list
+        #global course_list
         course_list = all_courses.get_courses()
         SubjectEntry.set_completion_list(tuple(course_list))
         Notice(GetCoursesNotice,"Succesfully Downloaded Courses")
@@ -65,19 +60,34 @@ def GetCoursesCallback():
     
 
 # Get Courses Elements
+courses_row = RowCursor()
 
 GetCoursesNotice = Frame(GetCoursesFrame)
-GetCoursesNotice.pack()
+GetCoursesNotice.grid(row=courses_row.row, column=0)
 
-Button(GetCoursesFrame, text="Download Courses", command = GetCoursesCallback ).pack()
+campuses = {'Hatfield':['http://www.up.ac.za/timetables/hatfield_timetable.html',IntVar()],
+        'Engineering':['http://www.up.ac.za/timetables/eng_timetable.html',IntVar()],
+        'Mamelodi':['http://www.up.ac.za/timetables/mamelodi_timetable.html',IntVar()],
+        'Groenkloof':['http://www.up.ac.za/timetables/groenkloof_timetable.html',IntVar()]}
+courses_row.get()
+for i,campus in enumerate(campuses):
+    Checkbutton(GetCoursesFrame,text=campus,variable=campuses[campus][1]).grid(row=courses_row.row,column=i)
+
+Button(GetCoursesFrame, text="Download Courses", command = GetCoursesCallback ).grid(row=courses_row.get(),column=0,columnspan=4)
 
 # Subjects Functions
 def add_subject(name):
-    row = subject_row.get()
-    SubjectLabel = Label(SubjectsFrame, text=name)
-    SubjectLabel.grid(row=row,column=0)
-    SubjectRemove = Button(SubjectsFrame, text="Remove", command = lambda: RemoveCallback(name,SubjectLabel,SubjectRemove)) 
-    SubjectRemove.grid(row=row,column=1)
+    row = subject_row.row
+    global col_counter
+    if col_counter == 3:
+        row = subject_row.get()
+        col_counter = 0
+        
+    SubjectLabel = Label(SubjectsList, text=name)
+    SubjectLabel.grid(row=row,column=col_counter*2)
+    SubjectRemove = Button(SubjectsList, text="Remove", command = lambda: RemoveCallback(name,SubjectLabel,SubjectRemove)) 
+    SubjectRemove.grid(row=row,column=col_counter*2+1)
+    col_counter += 1
 
 def RemoveCallback(name,s_label,s_button):
     global subject_names
@@ -86,7 +96,7 @@ def RemoveCallback(name,s_label,s_button):
     subject_names.remove(name)
     user_options.write('subject_names',subject_names)
 
-def AddSubjectCallback():
+def AddSubjectCallback(*args):
     global subject_names
     name = SubjectEntry.get().upper()
     # check if name already exists
@@ -103,21 +113,28 @@ course_list = all_courses.get_courses()
 
 # Subjects Elements
 
-subject_row = RowCursor()
+subject_frame_row = RowCursor()
 
 SubjectsNotice = Frame(SubjectsFrame)
-SubjectsNotice.grid(row=subject_row.get(),column=0)
+SubjectsNotice.grid(row=subject_frame_row.row,column=0,columnspan=2)
 
-row = subject_row.get()
-
+frame_row = subject_frame_row.get()
 SubjectEntry = AutocompleteEntry(SubjectsFrame)
 SubjectEntry.set_completion_list(tuple(course_list))
-SubjectEntry.grid(row=row,column = 0)
-Button(SubjectsFrame, text="Add Subject", command = AddSubjectCallback ).grid(row=row,column = 1)
+SubjectEntry.bind("<Return>",AddSubjectCallback)
+SubjectEntry.grid(row=frame_row,column=0)
 
-Label(SubjectsFrame,text = 'Current Courses Are:').grid(row=subject_row.get(),column=0)
+Button(SubjectsFrame, text="Add Subject", command = AddSubjectCallback ).grid(row=frame_row,column=1,sticky=W)
+
+Label(SubjectsFrame,text = 'Current Courses Are:').grid(row=subject_frame_row.get(),column=0)
+
+SubjectsList = Frame(SubjectsFrame)
+SubjectsList.grid(column=0,columnspan=2)
 
 subject_names = user_options.read('subject_names')
+col_counter = 0
+subject_row = RowCursor()
+
 if subject_names:
     for name in subject_names:
         add_subject(name)
@@ -130,20 +147,14 @@ def RefreshTableCallback():
     
     user_options.write('user_semester',user_semester.get())
     user_options.write('user_permutation',user_permutation.get())
-    forget = user_permutation.get()
-    if user_semester.get() == 1:
-        PermSelect.config(values=tuple(options1),textvariable=user_permutation)
-    else:
-        PermSelect.config(values=tuple(options2),textvariable=user_permutation)    
-    user_permutation.set(forget)
+    UpdatePermSelect()
     make_table()
 
 def TimeTableCallBack():
     
     user_options.write('user_clashes',user_clashes.get())
-    subjects = user_options.read('subject_names')
     
-    len1,len2 = all_courses.get_valid_time_tables(subjects,user_clashes.get())
+    len1,len2 = all_courses.get_valid_time_tables(subject_names,user_clashes.get())
 
     global options1,option2
     options1 = range(len1)
@@ -151,12 +162,7 @@ def TimeTableCallBack():
     user_options.write('options1',options1)
     user_options.write('options2',options2)
 
-    forget = user_permutation.get()
-    if user_semester.get() == 1:
-        PermSelect.config(values=tuple(options1),textvariable=user_permutation)
-    else:
-        PermSelect.config(values=tuple(options2),textvariable=user_permutation)    
-    user_permutation.set(forget)
+    UpdatePermSelect()
 
     make_table()
 
@@ -178,6 +184,13 @@ def make_table():
             table_vars[i][j]['subject'].set(subject)
             table_vars[i][j]['venue'].set(venue)
 
+def UpdatePermSelect():
+    forget = user_permutation.get()
+    if user_semester.get() == 1:
+        PermSelect.config(values=tuple(options1),textvariable=user_permutation,command=RefreshTableCallback)
+    else:
+        PermSelect.config(values=tuple(options2),textvariable=user_permutation,command=RefreshTableCallback)  
+    user_permutation.set(forget)
 
 options1 = user_options.read("options1")
 if not options1:
@@ -218,19 +231,17 @@ Button(TimeTablesFrame, text="Calculate Time Tables", command=TimeTableCallBack 
 SemesterLabel = Label(TimeTablesFrame,text="Semester ")
 SemesterLabel.pack(side=LEFT)
 
-SemesterSelect= Spinbox(TimeTablesFrame,values=(1,2),textvariable=user_semester)
+SemesterSelect= Spinbox(TimeTablesFrame)
+forget = user_semester.get()
+SemesterSelect.config(values=(1,2),textvariable=user_semester,command=RefreshTableCallback)
+user_semester.set(forget)
 SemesterSelect.pack(side=LEFT)
 
 OptionLabel = Label(TimeTablesFrame,text="Option ")
 OptionLabel.pack(side=LEFT)
 
 PermSelect = Spinbox(TimeTablesFrame)
-forget = user_permutation.get()
-if user_semester.get() == 1:
-    PermSelect.config(values=tuple(options1),textvariable=user_permutation)
-else:
-    PermSelect.config(values=tuple(options2),textvariable=user_permutation)    
-user_permutation.set(forget)
+UpdatePermSelect()
 PermSelect.pack(side=LEFT)
 
 RefreshButton = Button(TimeTablesFrame,text="Refresh",command = RefreshTableCallback)
